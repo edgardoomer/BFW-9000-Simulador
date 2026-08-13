@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Proyectos{% endblock %}
+{% block encabezado %}Tus proyectos{% endblock %}
+
+{% block acciones %}
+  <a class="btn btn-pri" href="{% url 'core:proyecto_nuevo' %}">+ Nuevo proyecto</a>
+  {% if not hay_ejemplos %}
+    <form method="post" action="{% url 'core:cargar_ejemplos' %}" style="display:inline">
+      {% csrf_token %}
+      <button type="submit">Cargar ejemplos</button>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block contenido %}
+{% if lista %}
+  <div class="panelbox">
+    <div class="tablescroll">
+      <table class="list">
+        <tr>
+          <th>ID</th><th>Proyecto</th><th>Campo</th><th>Bloque</th>
+          <th>Fecha</th><th class="num">Área (ac)</th>
+          <th class="num">Iny</th><th class="num">Prod</th><th class="num">Canales</th>
+          <th></th>
+        </tr>
+        {% for p in lista %}
+        <tr>
+          <td>{{ p.id_proyecto }}</td>
+          <td class="n"><a href="{% url 'core:estudio' p.id %}">{{ p.nombre }}</a></td>
+          <td>{{ p.campo|default:"—" }}</td>
+          <td>{{ p.bloque|default:"—" }}</td>
+          <td>{{ p.fecha|date:"Y-m-d" }}</td>
+          <td class="num">{{ p.area_acres|floatformat:0 }}</td>
+          <td class="num">{{ p.n_iny }}</td>
+          <td class="num">{{ p.n_pro }}</td>
+          <td class="num">{{ p.n_par }}</td>
+          <td class="right nowrap">
+            <a class="btn mini" href="{% url 'core:estudio' p.id %}">Estudio</a>
+            <a class="btn mini" href="{% url 'core:calculos' p.id %}">Cálculos</a>
+            <a class="btn mini" href="{% url 'core:economia' p.id %}">Economía</a>
+            <a class="btn mini" href="{% url 'core:proyecto_editar' p.id %}">Editar</a>
+            <form method="post" action="{% url 'core:proyecto_eliminar' p.id %}"
+                  style="display:inline"
+                  onsubmit="return confirm('Se eliminará {{ p.id_proyecto|escapejs }} con todos sus pozos, curvas y resultados. ¿Continuar?')">
+              {% csrf_token %}
+              <button class="mini btn-danger" type="submit">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="vacio">
+    <p style="margin-bottom:14px">Todavía no hay proyectos cargados.</p>
+    <form method="post" action="{% url 'core:cargar_ejemplos' %}" style="display:inline">
+      {% csrf_token %}
+      <button class="btn-pri" type="submit">Cargar los dos ejemplos</button>
+    </form>
+    <a class="btn" href="{% url 'core:proyecto_nuevo' %}" style="margin-left:8px">Crear uno en blanco</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Método{% endblock %}
+{% block encabezado %}El método, paso a paso{% endblock %}
+{% block subtitulo %}
+  <p class="sub">Desplazamiento inmiscible de petróleo por agua en un medio poroso.
+  Cada paso muestra la ecuación tal como la resuelve el programa. Bajo cada
+  fórmula está su forma lineal <b>UnicodeMath</b>, lista para pegar en Word
+  (Insertar → Ecuación → UnicodeMath).</p>
+{% endblock %}
+
+{% block acciones %}
+  {% if proyecto %}<a class="btn" href="{% url 'core:estudio' proyecto.id %}">← Volver al estudio</a>{% endif %}
+{% endblock %}
+
+{% block contenido %}
+
+<div class="panelbox">
+  <div class="kicker">Punto de partida</div>
+  <h2>Las tres hipótesis de Buckley y Leverett</h2>
+  <ol style="color:var(--soft);margin:10px 0 0 22px;max-width:78ch">
+    <li>Flujo de dos fases <b>inmiscibles e incompresibles</b>; el agua desplaza al petróleo.</li>
+    <li>El medio es <b>homogéneo en cada dirección de flujo</b> y el caudal total es constante.</li>
+    <li>Se desprecian la <b>presión capilar</b> y la <b>gravedad</b> frente al gradiente viscoso.</li>
+  </ol>
+  <p class="hint mt">Bajo esas hipótesis la ecuación de continuidad de la fase agua se
+  reduce a una ley de conservación cuya velocidad depende sólo de la saturación:
+  ése es todo el método.</p>
+</div>
+
+<!-- ==================================================== 1 -->
+<div class="paso">
+  <div class="kicker">Paso 1</div>
+  <h2>Ecuación de avance frontal</h2>
+  <p>Balance de materia del agua en un elemento de volumen. La velocidad con que
+  viaja un valor determinado de saturación es proporcional a la pendiente de la
+  curva de flujo fraccional en ese punto.</p>
+  <div class="um">
+    (∂S<sub>w</sub>/∂t)<sub>x</sub> = − (q<sub>t</sub> / (φ·A)) · (∂f<sub>w</sub>/∂x)<sub>t</sub>
+    &nbsp;&nbsp;⟹&nbsp;&nbsp;
+    (dx/dt)<sub>S<sub>w</sub></sub> = (q<sub>t</sub> / (φ·A)) · (df<sub>w</sub>/dS<sub>w</sub>)
+    <small>UnicodeMath: (∂S_w/∂t)_x = −(q_t/(φ·A))·(∂f_w/∂x)_t   →   (dx/dt)_(S_w) = (q_t/(φ·A))·(df_w/dS_w)</small>
+  </div>
+  <p>Cada saturación viaja a velocidad constante. Las saturaciones altas viajan más
+  rápido que las bajas, así que el perfil se vuelve multivaluado: ahí aparece el
+  choque, que es el frente de agua.</p>
+</div>
+
+<!-- ==================================================== 2 -->
+<div class="paso">
+  <div class="kicker">Paso 2</div>
+  <h2>Ajuste de la razón de permeabilidades relativas</h2>
+  <p>Sobre el rango de saturación móvil, la razón k<sub>ro</sub>/k<sub>rw</sub>
+  cae de forma casi exponencial con S<sub>w</sub>. Tomando logaritmo, el ajuste
+  es una recta y basta una regresión lineal.</p>
+  <div class="um">
+    k<sub>ro</sub>/k<sub>rw</sub> = a·e<sup>−b·S<sub>w</sub></sup>
+    &nbsp;&nbsp;⟺&nbsp;&nbsp;
+    ln(k<sub>ro</sub>/k<sub>rw</sub>) = ln a − b·S<sub>w</sub>
+    <small>UnicodeMath: k_ro/k_rw = a·e^(−b·S_w)   ⟺   ln(k_ro/k_rw) = ln a − b·S_w</small>
+  </div>
+  <div class="um g">
+    b = − [ Σ(S<sub>w,i</sub> − S̄<sub>w</sub>)(y<sub>i</sub> − ȳ) ] / [ Σ(S<sub>w,i</sub> − S̄<sub>w</sub>)² ] ,
+    &nbsp;&nbsp; a = e<sup>(ȳ + b·S̄<sub>w</sub>)</sup> ,
+    &nbsp;&nbsp; y<sub>i</sub> = ln(k<sub>ro,i</sub>/k<sub>rw,i</sub>)
+    <small>UnicodeMath: b = −[∑(S_(w,i) − S̄_w)(y_i − ȳ)]/[∑(S_(w,i) − S̄_w)^2] ,  a = e^(ȳ + b·S̄_w)</small>
+  </div>
+  <p class="hint">Las filas con k<sub>rw</sub> = 0 o k<sub>ro</sub> = 0 se descartan:
+  su logaritmo no existe. El programa informa cuántas quedaron fuera y el R² del ajuste.</p>
+</div>
+
+<!-- ==================================================== 3 -->
+<div class="paso">
+  <div class="kicker">Paso 3</div>
+  <h2>Curva de flujo fraccional</h2>
+  <p>Fracción del caudal total que es agua, en condiciones de yacimiento,
+  despreciando capilaridad y gravedad.</p>
+  <div class="um">
+    f<sub>w</sub> = q<sub>w</sub>/(q<sub>w</sub> + q<sub>o</sub>)
+    = 1 / (1 + (k<sub>ro</sub>/k<sub>rw</sub>)·(μ<sub>w</sub>/μ<sub>o</sub>))
+    = 1 / (1 + (μ<sub>w</sub>/μ<sub>o</sub>)·a·e<sup>−b·S<sub>w</sub></sup>)
+    <small>UnicodeMath: f_w = 1/(1 + (k_ro/k_rw)·(μ_w/μ_o)) = 1/(1 + (μ_w/μ_o)·a·e^(−b·S_w))</small>
+  </div>
+  <p>Con el ajuste exponencial, f<sub>w</sub> queda como una curva logística en
+  S<sub>w</sub>: la forma de S que se ve en el gráfico de resultados.</p>
+</div>
+
+<!-- ==================================================== 4 -->
+<div class="paso">
+  <div class="kicker">Paso 4</div>
+  <h2>Derivada analítica</h2>
+  <p>Al derivar la logística aparece una identidad muy cómoda: no hacen falta
+  diferencias finitas, y con ello desaparece el ruido numérico.</p>
+  <div class="um">
+    df<sub>w</sub>/dS<sub>w</sub> = b · f<sub>w</sub> · (1 − f<sub>w</sub>)
+    <small>UnicodeMath: df_w/dS_w = b·f_w·(1 − f_w)</small>
+  </div>
+  <p class="hint">La derivada es máxima en f<sub>w</sub> = 0.5 y se anula en los
+  dos extremos, que es justo el comportamiento que exige la construcción del choque.</p>
+</div>
+
+<!-- ==================================================== 5 -->
+<div class="paso">
+  <div class="kicker">Paso 5</div>
+  <h2>Saturación del frente · construcción de Welge</h2>
+  <p>El perfil multivaluado se corrige con un choque. La condición de salto
+  (Rankine–Hugoniot) iguala la velocidad del choque con la derivada en el frente:</p>
+  <div class="um c">
+    (df<sub>w</sub>/dS<sub>w</sub>)|<sub>S<sub>wf</sub></sub>
+    = [ f<sub>w</sub>(S<sub>wf</sub>) − f<sub>w</sub>(S<sub>wi</sub>) ] / ( S<sub>wf</sub> − S<sub>wi</sub> )
+    <small>UnicodeMath: (df_w/dS_w)|_(S_wf) = [f_w(S_wf) − f_w(S_wi)]/(S_wf − S_wi)</small>
+  </div>
+  <p>Es la recta tangente a la curva f<sub>w</sub> trazada desde el estado inicial.
+  Entre todas las cuerdas posibles, la física (condición de entropía) elige la de
+  <b>mayor pendiente</b>, y ése es el criterio que resuelve el programa: maximizar
+  la cuerda equivale a la tangencia y evita la ambigüedad de las dos raíces que
+  tiene la ecuación de tangencia con el modelo exponencial.</p>
+  <div class="um g">
+    S<sub>wf</sub> = arg&nbsp;max<sub>S<sub>w</sub></sub>
+    { [ f<sub>w</sub>(S<sub>w</sub>) − f<sub>w</sub>(S<sub>wi</sub>) ] / ( S<sub>w</sub> − S<sub>wi</sub> ) } ,
+    &nbsp;&nbsp; S<sub>wi</sub> &lt; S<sub>w</sub> ≤ 1 − S<sub>or</sub>
+    <small>UnicodeMath: S_wf = argmax_(S_w) {[f_w(S_w) − f_w(S_wi)]/(S_w − S_wi)},  S_wi &lt; S_w ≤ 1 − S_or</small>
+  </div>
+  <p class="hint">Cuando k<sub>rw</sub>(S<sub>wc</sub>) = 0 se tiene
+  f<sub>w</sub>(S<sub>wi</sub>) = 0 y se recupera la forma clásica del texto:
+  la tangente sale de (S<sub>wi</sub>, 0). El ajuste exponencial no puede
+  representar k<sub>rw</sub> → 0, así que deja un f<sub>w</sub>(S<sub>wi</sub>)
+  pequeño pero no nulo; por eso se usa la forma general.</p>
+  <p>Para el caso clásico, la tangencia tiene además forma cerrada:</p>
+  <div class="um">
+    (μ<sub>w</sub>/μ<sub>o</sub>)·a·e<sup>−b·S<sub>wf</sub></sup>
+    · [ b·(S<sub>wf</sub> − S<sub>wi</sub>) − 1 ] = 1
+    <small>UnicodeMath: (μ_w/μ_o)·a·e^(−b·S_wf)·[b·(S_wf − S_wi) − 1] = 1</small>
+  </div>
+</div>
+
+<!-- ==================================================== 6 -->
+<div class="paso">
+  <div class="kicker">Paso 6</div>
+  <h2>Saturación promedio y eficiencia de desplazamiento</h2>
+  <p>Prolongando la tangente hasta f<sub>w</sub> = 1 se lee la saturación media
+  de la zona barrida en el instante de la irrupción.</p>
+  <div class="um">
+    S̄<sub>w</sub> = S<sub>wi</sub> + [ 1 − f<sub>w</sub>(S<sub>wi</sub>) ] / (df<sub>w</sub>/dS<sub>w</sub>)|<sub>S<sub>wf</sub></sub>
+    <small>UnicodeMath: S̄_w = S_wi + [1 − f_w(S_wi)]/(df_w/dS_w)|_(S_wf)</small>
+  </div>
+  <div class="um g">
+    E<sub>D</sub> = (S̄<sub>w</sub> − S<sub>wi</sub>) / (1 − S<sub>wi</sub>)
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    M = (k<sub>rw</sub>@S<sub>or</sub> / μ<sub>w</sub>) / (k<sub>ro</sub>@S<sub>wc</sub> / μ<sub>o</sub>)
+    <small>UnicodeMath: E_D = (S̄_w − S_wi)/(1 − S_wi)   ·   M = (k_rw@S_or/μ_w)/(k_ro@S_wc/μ_o)</small>
+  </div>
+  <p class="hint">M &gt; 1 indica desplazamiento inestable: el agua es más móvil que
+  el petróleo y tiende a digitarse. En crudos pesados M puede pasar de 10 y el
+  barrido areal cae de forma notable.</p>
+</div>
+
+<!-- ==================================================== 7 -->
+<div class="paso">
+  <div class="kicker">Paso 7</div>
+  <h2>Avance del frente en flujo lineal</h2>
+  <p>Caso de libro: sección transversal A constante. El factor 5.6146 convierte
+  barriles a pies cúbicos.</p>
+  <div class="um">
+    x<sub>f</sub>(t) = (5.6146 · q · t) / (φ · A) · (df<sub>w</sub>/dS<sub>w</sub>)|<sub>S<sub>wf</sub></sub>
+    <small>UnicodeMath: x_f(t) = (5.6146·q·t)/(φ·A)·(df_w/dS_w)|_(S_wf)</small>
+  </div>
+  <div class="um c">
+    t<sub>BT</sub> = (φ · A · L) / (5.6146 · q · (df<sub>w</sub>/dS<sub>w</sub>)|<sub>S<sub>wf</sub></sub>)
+    <small>UnicodeMath: t_BT = (φ·A·L)/(5.6146·q·(df_w/dS_w)|_(S_wf))</small>
+  </div>
+</div>
+
+<!-- ==================================================== 8 -->
+<div class="paso">
+  <div class="kicker">Paso 8 · lo que hace este programa</div>
+  <h2>Reparto direccional y área barrida</h2>
+  <p>Un patrón real no avanza igual en todas las direcciones. El agua toma los
+  canales de mayor permeabilidad, así que el frente sale deformado y llega antes
+  a unos productores que a otros. El programa reparte el caudal del inyector
+  entre azimuts con una <b>densidad angular</b> w(θ): un fondo constante, que da
+  el cuerpo redondeado, más una campana por cada productor conectado, que son los
+  brazos.</p>
+  <div class="um">
+    T<sub>j</sub> = k<sub>j</sub> · h<sub>j</sub> / ln(L<sub>j</sub> / r<sub>w</sub>)
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    w(θ) = w<sub>0</sub> + Σ<sub>j</sub> T̂<sub>j</sub> · e<sup>−((θ − θ<sub>j</sub>)/σ<sub>j</sub>)²</sup>
+    <small>UnicodeMath: T_j = k_j·h_j/ln(L_j/r_w)   ·   w(θ) = w_0 + ∑_j T̂_j·e^(−((θ − θ_j)/σ_j)^2)</small>
+  </div>
+  <p>El balance volumétrico por sector angular cierra el problema: lo que entra
+  en el sector dθ es lo que llena el volumen poroso barrido de ese sector.</p>
+  <div class="um g">
+    5.6146·q·t · w(θ)dθ / W = φ · h · ΔS<sub>w</sub> · (r²/2) · dθ ,
+    &nbsp;&nbsp; W = ∫<sub>0</sub><sup>2π</sup> w(θ) dθ
+    <small>UnicodeMath: 5.6146·q·t·w(θ)dθ/W = φ·h·ΔS_w·(r^2/2)·dθ ,  W = ∫_0^2π w(θ)dθ</small>
+  </div>
+  <div class="um c">
+    r(θ, t) = √( 2 · 5.6146 · q · t · w(θ) / ( W · φ · h · ΔS<sub>w</sub> ) ) ,
+    &nbsp;&nbsp; ΔS<sub>w</sub> = S̄<sub>w</sub> − S<sub>wi</sub>
+    <small>UnicodeMath: r(θ,t) = √(2·5.6146·q·t·w(θ)/(W·φ·h·ΔS_w)) ,  ΔS_w = S̄_w − S_wi</small>
+  </div>
+  <p>El frente avanza con la <b>raíz del tiempo</b>, como corresponde a un flujo
+  radial, y la dirección entra por w(θ). La irrupción en el productor j ocurre
+  cuando el radio en su azimut alcanza su distancia:</p>
+  <div class="um">
+    t<sub>BT,j</sub> = ( L<sub>j</sub> / r<sub>1</sub>(θ<sub>j</sub>) )²
+    &nbsp;&nbsp;con&nbsp;&nbsp;
+    r<sub>1</sub>(θ) = r(θ, t = 1)
+    <small>UnicodeMath: t_(BT,j) = (L_j/r_1(θ_j))^2 ,  r_1(θ) = r(θ, t=1)</small>
+  </div>
+  <p class="hint">Consecuencia práctica: el radio crece con √k pero el tiempo de
+  irrupción cae con k. Un canal de 100 md contra uno de 10 md lleva el agua
+  ≈3.2 veces más lejos, pero irrumpe ≈10 veces antes. Si un productor recibe
+  agua de varios inyectores, la irrupción es la <b>primera llegada</b> de todas.</p>
+</div>
+
+<!-- ==================================================== 9 -->
+<div class="paso">
+  <div class="kicker">Paso 9</div>
+  <h2>Después de la irrupción</h2>
+  <p>Segunda parte de la construcción de Welge. Para cada saturación
+  S<sub>w2</sub> en la cara del productor:</p>
+  <div class="um">
+    W<sub>i</sub> = 1 / (df<sub>w</sub>/dS<sub>w</sub>)|<sub>S<sub>w2</sub></sub>
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    S̄<sub>w</sub> = S<sub>w2</sub> + (1 − f<sub>w2</sub>) · W<sub>i</sub>
+    <small>UnicodeMath: W_i = 1/(df_w/dS_w)|_(S_w2)   ·   S̄_w = S_w2 + (1 − f_w2)·W_i</small>
+  </div>
+  <div class="um g">
+    N<sub>p</sub> = (S̄<sub>w</sub> − S<sub>wi</sub>) · V<sub>p</sub> / B<sub>o</sub>
+    &nbsp;&nbsp;·&nbsp;&nbsp;
+    WOR = ( f<sub>w2</sub> / (1 − f<sub>w2</sub>) ) · ( B<sub>o</sub> / B<sub>w</sub> )
+    <small>UnicodeMath: N_p = (S̄_w − S_wi)·V_p/B_o   ·   WOR = (f_w2/(1 − f_w2))·(B_o/B_w)</small>
+  </div>
+  <p class="hint">W<sub>i</sub> está en volúmenes porosos. Esta relación es la que
+  alimenta el perfil de corte de agua de la pestaña de economía: el pozo que
+  primero ve el agua es también el primero que encarece el barril.</p>
+</div>
+
+<!-- ==================================================== nomenclatura -->
+<div class="panelbox">
+  <div class="kicker">Nomenclatura</div>
+  <h2>Símbolos y unidades</h2>
+  <div class="simbolos">
+    <div><b>S<sub>w</sub></b> saturación de agua, fracción</div>
+    <div><b>S<sub>wi</sub></b> saturación de agua inicial (connata)</div>
+    <div><b>S<sub>or</sub></b> saturación residual de petróleo</div>
+    <div><b>S<sub>wf</sub></b> saturación en el frente de choque</div>
+    <div><b>S̄<sub>w</sub></b> saturación media tras el frente</div>
+    <div><b>f<sub>w</sub></b> flujo fraccional de agua, fracción</div>
+    <div><b>k<sub>rw</sub></b> permeabilidad relativa al agua</div>
+    <div><b>k<sub>ro</sub></b> permeabilidad relativa al petróleo</div>
+    <div><b>a, b</b> constantes del ajuste exponencial</div>
+    <div><b>μ<sub>w</sub></b> viscosidad del agua, cp</div>
+    <div><b>μ<sub>o</sub></b> viscosidad del petróleo, cp</div>
+    <div><b>φ</b> porosidad, fracción</div>
+    <div><b>k</b> permeabilidad absoluta, md</div>
+    <div><b>h</b> espesor neto, ft</div>
+    <div><b>A</b> área transversal al flujo, ft²</div>
+    <div><b>q</b> caudal de inyección, BPD</div>
+    <div><b>L</b> distancia inyector–productor, ft</div>
+    <div><b>r<sub>w</sub></b> radio del pozo, ft</div>
+    <div><b>θ</b> azimut medido desde el eje +X, rad</div>
+    <div><b>σ<sub>j</sub></b> ancho angular del brazo j, rad</div>
+    <div><b>T<sub>j</sub></b> transmisibilidad del canal j, md·ft</div>
+    <div><b>t<sub>BT</sub></b> tiempo de irrupción, días</div>
+    <div><b>W<sub>i</sub></b> agua inyectada, volúmenes porosos</div>
+    <div><b>N<sub>p</sub></b> petróleo producido acumulado, bbl</div>
+    <div><b>E<sub>D</sub></b> eficiencia de desplazamiento, fracción</div>
+    <div><b>M</b> razón de movilidad, adimensional</div>
+    <div><b>B<sub>o</sub>, B<sub>w</sub></b> factores volumétricos, by/bn</div>
+    <div><b>5.6146</b> ft³ por barril</div>
+  </div>
+</div>
+
+<div class="panelbox">
+  <div class="kicker">Referencias</div>
+  <h2>De dónde sale todo esto</h2>
+  <ul style="color:var(--soft);margin-left:22px;max-width:78ch">
+    <li>Buckley, S. E. y Leverett, M. C. (1942). <i>Mechanism of Fluid Displacement
+      in Sands</i>. Transactions of the AIME, 146, 107–116.</li>
+    <li>Welge, H. J. (1952). <i>A Simplified Method for Computing Oil Recovery by
+      Gas or Water Drive</i>. Journal of Petroleum Technology, 4(4), 91–98.</li>
+    <li>Craft, B. C. y Hawkins, M. F. <i>Applied Petroleum Reservoir Engineering</i>,
+      capítulo de desplazamiento inmiscible.</li>
+    <li>Ahmed, T. <i>Reservoir Engineering Handbook</i>, capítulo de mecanismos de
+      recuperación y flujo fraccional.</li>
+  </ul>
+</div>
+{% endblock %}

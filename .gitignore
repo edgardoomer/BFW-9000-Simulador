@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+db.sqlite3-journal
+.env
+staticfiles/
+.idea/
+.vscode/
+*.log
+datos/
+BFW-9000.ico
+
+# Configuracion local del agente, no del proyecto
+.claude/

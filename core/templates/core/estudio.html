@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Estudio · {{ proyecto.id_proyecto }}{% endblock %}
+{% block encabezado %}{{ proyecto.nombre }}{% endblock %}
+{% block subtitulo %}
+  <p class="sub">
+    {{ proyecto.campo }}{% if proyecto.bloque %} · {{ proyecto.bloque }}{% endif %}
+    {% if proyecto.yacimiento %} · arena {{ proyecto.yacimiento }}{% endif %}
+    · {{ proyecto.area_acres|floatformat:0 }} acres
+    · coordenadas en {{ proyecto.get_unidad_coord_display|lower }}
+  </p>
+{% endblock %}
+
+{% block acciones %}
+  <select class="selproj" id="cambiarProyecto" aria-label="Cambiar de proyecto">
+    {% for p in todos_proyectos %}
+      <option value="{% url 'core:estudio' p.id %}" {% if p.id == proyecto.id %}selected{% endif %}>
+        {{ p.id_proyecto }} — {{ p.nombre|truncatechars:44 }}
+      </option>
+    {% endfor %}
+  </select>
+  <a class="btn" href="{% url 'core:proyecto_editar' proyecto.id %}">Editar ficha</a>
+  <span class="guardando" id="guardando">guardando…</span>
+{% endblock %}
+
+{% block contenido %}
+{{ datos|json_script:"datosIni" }}
+{{ pozos|json_script:"pozosIni" }}
+{{ curvas|json_script:"curvasIni" }}
+{{ opciones|json_script:"opcionesIni" }}
+
+<div class="estudio">
+
+  <!-- ==================== IZQUIERDA · resultados ==================== -->
+  <div>
+    <div class="panelbox">
+      <div class="between mb">
+        <div>
+          <div class="kicker">Resultado · avance areal</div>
+          <h2>Área barrida por el agua inyectada</h2>
+        </div>
+        <div class="leyenda">
+          <span><i style="background:var(--good)"></i>Inyector</span>
+          <span><i style="background:var(--crude)"></i>Productor</span>
+          <span><i style="background:var(--bad)"></i>Con irrupción</span>
+          <span><i style="background:var(--brine);opacity:.55"></i>Agua</span>
+        </div>
+      </div>
+
+      <div id="mapa"></div>
+
+      <div class="timebar">
+        <button id="play" style="min-width:104px">▶ Reproducir</button>
+        <input type="range" id="tiempo" min="0" max="1000" value="0" step="1"
+               aria-label="Tiempo de inyección">
+        <span class="t"><b id="tLbl">0</b> días</span>
+      </div>
+      <p class="hint mt">
+        El contorno azul es el frente de choque. Cada brazo apunta a un productor y
+        su longitud sale del reparto de caudal por transmisibilidad k·h/ln(L/rw):
+        el canal más permeable se lleva más agua y llega antes. El radio crece con
+        la raíz del tiempo, como corresponde a un flujo radial.
+      </p>
+    </div>
+
+    <div class="panelbox">
+      <div class="kicker">Orden de irrupción</div>
+      <h2>¿A qué pozo llega primero el agua?</h2>
+      <div class="tablescroll mt">
+        <table class="list" id="tablaBT"></table>
+      </div>
+    </div>
+
+    <div class="panelbox">
+      <div class="between mb">
+        <div>
+          <div class="kicker">Resultado · flujo fraccional</div>
+          <h2>Curva fw vs Sw y tangente de Welge</h2>
+        </div>
+        <select id="selProd" style="width:auto;min-width:190px"></select>
+      </div>
+      <div id="graficoFw"></div>
+      <div class="stats" id="statsFw"></div>
+    </div>
+
+    <div id="avisos"></div>
+  </div>
+
+  <!-- ==================== DERECHA · entradas ==================== -->
+  <div class="pane">
+    <div class="panelbox" style="padding-bottom:12px">
+      <div class="between">
+        <div>
+          <div class="kicker">Entrada de datos</div>
+          <h2 style="font-size:16px">Pozos del patrón</h2>
+        </div>
+      </div>
+      <p class="hint" style="margin:6px 0 11px">
+        Las fichas se contraen al hacer clic en su título y se pueden arrastrar
+        para acomodarlas una al lado de otra.
+      </p>
+      <div class="flex">
+        <button id="addIny">+ Inyector</button>
+        <button id="addProd">+ Productor</button>
+        <button class="ghost mini" id="contraerTodo">Contraer todo</button>
+      </div>
+    </div>
+
+    <div class="wellwrap" id="fichas"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'core/js/chart.js' %}?v={{ ASSET_V }}"></script>
+<script src="{% static 'core/js/mapa.js' %}?v={{ ASSET_V }}"></script>
+<script src="{% static 'core/js/estudio.js' %}?v={{ ASSET_V }}"></script>
+<script>
+  BLEstudio.iniciar({
+    proyectoId: {{ proyecto.id }},
+    activo: {{ activo|default:"null" }},
+    urls: {
+      pozoCrear:  "{% url 'core:api_pozo_crear' proyecto.id %}",
+      parCrear:   "{% url 'core:api_par_crear' proyecto.id %}",
+      pozoBase:   "/api/pozo/",
+      parBase:    "/api/par/",
+      curvaBase:  "/api/curva/",
+      calculos:   "{% url 'core:calculos' proyecto.id %}"
+    }
+  });
+</script>
+{% endblock %}

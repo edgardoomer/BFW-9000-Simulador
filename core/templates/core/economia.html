@@ -1,0 +1,233 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Economía · {{ proyecto.id_proyecto }}{% endblock %}
+{% block encabezado %}Análisis económico del patrón{% endblock %}
+{% block subtitulo %}
+  <p class="sub">¿Hasta qué mes el patrón paga el agua que mueve? El perfil de
+  producción no es una curva inventada: el corte de agua de cada pozo sale de la
+  misma solución de Buckley-Leverett, así que el pozo al que el agua llega
+  primero es también el primero que encarece el barril.</p>
+{% endblock %}
+
+{% block acciones %}
+  <a class="btn" href="{% url 'core:estudio' proyecto.id %}">← Estudio</a>
+  <a class="btn" href="?refrescar=1">↻ Actualizar precio</a>
+{% endblock %}
+
+{% block contenido %}
+
+<!-- ==================== precio ==================== -->
+<div class="panelbox">
+  <div class="between">
+    <div>
+      <div class="kicker">Referencia de mercado · oilpriceapi.com</div>
+      <h2>{{ cotizacion.etiqueta }} · {{ cotizacion.precio|floatformat:2 }} USD/bbl</h2>
+      <p class="hint" style="margin-top:4px">
+        {% if cotizacion.fuente == 'api' %}Cotización en línea{% elif cotizacion.fuente == 'cache' %}Desde caché local (se refresca cada 30 min){% elif cotizacion.fuente == 'base' %}Último valor guardado en base de datos{% else %}Valor de respaldo de configuración{% endif %}
+        {% if cotizacion.as_of %} · vigencia {{ cotizacion.as_of }}{% endif %}
+        {% if cotizacion.error %} · <span style="color:var(--bad)">{{ cotizacion.error }}</span>{% endif %}
+      </p>
+    </div>
+    <div class="stats" style="margin:0;min-width:340px">
+      <div class="stat hi"><div class="k">Precio usado</div>
+        <div class="v">{{ precio_usado|floatformat:2 }}</div><div class="u">USD/bbl {% if params.precio_manual %}(manual){% endif %}</div></div>
+      <div class="stat"><div class="k">Diferencial</div>
+        <div class="v">{{ params.diferencial|floatformat:2 }}</div><div class="u">USD/bbl</div></div>
+      <div class="stat"><div class="k">Precio neto</div>
+        <div class="v">{{ res.resumen.precio_neto|floatformat:2 }}</div><div class="u">USD/bbl en boca de pozo</div></div>
+    </div>
+  </div>
+  {% if series.precio_hist %}
+    <div class="mt"><div id="g_precio"></div></div>
+  {% elif hist_error %}
+    <div class="info mt">No se pudo traer el histórico de precios: {{ hist_error }}</div>
+  {% endif %}
+</div>
+
+{% if not res.ok %}
+  <div class="warn">{{ res.mensaje }}</div>
+{% else %}
+
+<!-- ==================== veredicto ==================== -->
+<div class="panelbox">
+  <div class="kicker">Veredicto</div>
+  <h2>{% if res.resumen.viable %}El proyecto tiene sentido en el horizonte evaluado{% else %}El proyecto no se paga en el horizonte evaluado{% endif %}</h2>
+  <div class="stats">
+    <div class="stat {% if res.resumen.viable %}good{% else %}warn{% endif %}">
+      <div class="k">VPN @ {{ params.tasa_descuento|floatformat:2 }}</div>
+      <div class="v">{{ res.resumen.vpn|floatformat:0 }}</div><div class="u">USD</div></div>
+    <div class="stat"><div class="k">Repago</div>
+      <div class="v">{% if res.resumen.payback_meses %}{{ res.resumen.payback_meses }}{% else %}—{% endif %}</div>
+      <div class="u">meses</div></div>
+    <div class="stat {% if res.resumen.mes_margen_negativo %}warn{% endif %}">
+      <div class="k">Margen negativo desde</div>
+      <div class="v">{% if res.resumen.mes_margen_negativo %}mes {{ res.resumen.mes_margen_negativo }}{% else %}nunca{% endif %}</div>
+      <div class="u">en el horizonte</div></div>
+    <div class="stat"><div class="k">Precio de equilibrio</div>
+      <div class="v">{{ res.resumen.precio_equilibrio|default:"—" }}</div><div class="u">USD/bbl del marcador</div></div>
+    <div class="stat"><div class="k">OPEX por barril</div>
+      <div class="v">{{ res.resumen.opex_por_bbl }}</div><div class="u">USD/bbl de petróleo</div></div>
+    <div class="stat"><div class="k">Agua inyectada / petróleo</div>
+      <div class="v">{{ res.resumen.razon_agua_petroleo }}</div><div class="u">bbl/bbl</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">Líquido del patrón</div><div class="v">{{ res.resumen.q_liquido_total|floatformat:0 }}</div><div class="u">BFPD (suma de los productores)</div></div>
+    <div class="stat"><div class="k">Corte de agua inicial</div><div class="v">{{ res.resumen.corte_inicial|floatformat:3 }}</div><div class="u">fracción</div></div>
+    <div class="stat hi"><div class="k">Petróleo inicial</div><div class="v">{{ res.resumen.qo_inicial|floatformat:0 }}</div><div class="u">BOPD</div></div>
+    <div class="stat"><div class="k">Agua inyectada</div><div class="v">{{ res.resumen.q_iny_total|floatformat:0 }}</div><div class="u">BWPD</div></div>
+    <div class="stat {% if res.resumen.vrr > 1.5 or res.resumen.vrr < 0.6 %}warn{% endif %}">
+      <div class="k">Reemplazo de vaciamiento</div><div class="v">{{ res.resumen.vrr }}</div>
+      <div class="u">inyectado / producido</div></div>
+  </div>
+  <p class="hint">El líquido total lo fijan los caudales de los pozos y no se
+  reescala: el caudal de petróleo y el corte de agua son dos formas de decir lo
+  mismo, y en los supuestos se elige cuál de los dos manda.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Petróleo acumulado</div><div class="v">{{ res.resumen.np_total|floatformat:0 }}</div><div class="u">bbl</div></div>
+    <div class="stat"><div class="k">Agua producida</div><div class="v">{{ res.resumen.wp_total|floatformat:0 }}</div><div class="u">bbl</div></div>
+    <div class="stat"><div class="k">Agua inyectada</div><div class="v">{{ res.resumen.wi_total|floatformat:0 }}</div><div class="u">bbl</div></div>
+    <div class="stat"><div class="k">Ingreso total</div><div class="v">{{ res.resumen.ingreso_total|floatformat:0 }}</div><div class="u">USD</div></div>
+    <div class="stat"><div class="k">OPEX total</div><div class="v">{{ res.resumen.opex_total|floatformat:0 }}</div><div class="u">USD</div></div>
+    <div class="stat"><div class="k">Utilidad neta</div><div class="v">{{ res.resumen.utilidad_total|floatformat:0 }}</div><div class="u">USD tras CAPEX</div></div>
+  </div>
+  {% if res.resumen.mes_margen_negativo %}
+    <div class="warn">A partir del mes {{ res.resumen.mes_margen_negativo }} el costo
+      de mover el agua supera el ingreso del petróleo. Ese es el límite económico
+      práctico del patrón con los supuestos actuales: más allá de ese punto, cada
+      barril de agua adicional destruye valor.</div>
+  {% endif %}
+</div>
+
+<!-- ==================== graficos ==================== -->
+<div class="charts">
+  <div class="chartbox">
+    <h3>Producción de petróleo y agua</h3>
+    <p class="hint">Cada escalón hacia abajo es la irrupción de un pozo.</p>
+    <div id="g_prod"></div>
+  </div>
+  <div class="chartbox">
+    <h3>Corte de agua del patrón</h3>
+    <p class="hint">Derivado del flujo fraccional, no de una curva de ajuste.</p>
+    <div id="g_corte"></div>
+  </div>
+  <div class="chartbox">
+    <h3>Ingreso, OPEX y margen mensual</h3>
+    <p class="hint">Donde el margen cruza cero está el límite económico.</p>
+    <div id="g_flujo"></div>
+  </div>
+  <div class="chartbox">
+    <h3>Flujo de caja acumulado y VPN</h3>
+    <p class="hint">Arranca en −CAPEX.</p>
+    <div id="g_acum"></div>
+  </div>
+  <div class="chartbox">
+    <h3>Composición del OPEX</h3>
+    <p class="hint">Acumulado del horizonte, por concepto.</p>
+    <div id="g_opex"></div>
+    <div class="leyenda" id="leyOpex"></div>
+  </div>
+  <div class="chartbox">
+    <h3>Costo operativo por barril de petróleo</h3>
+    <p class="hint">Sube porque el mismo OPEX se reparte entre menos barriles.</p>
+    <div id="g_opexbbl"></div>
+  </div>
+</div>
+
+<!-- ==================== irrupciones ==================== -->
+<div class="panelbox mt2">
+  <div class="kicker">Origen del deterioro</div>
+  <h2>Calendario de irrupciones</h2>
+  <div class="tablescroll">
+    <table class="list">
+      <tr><th>#</th><th>Pozo</th><th class="num">tBT (días)</th><th class="num">mes</th>
+        <th class="num">años</th><th class="num">L (ft)</th><th class="num">k (md)</th><th>Inyector</th></tr>
+      {% for f in res.irrupciones %}
+        <tr><td>{{ f.orden }}</td><td class="n">{{ f.nombre }}</td>
+          <td class="num">{{ f.tbt|floatformat:0 }}</td>
+          <td class="num">{{ f.mes }}</td>
+          <td class="num">{{ f.anios }}</td>
+          <td class="num">{{ f.L|floatformat:0 }}</td>
+          <td class="num">{{ f.k|floatformat:0 }}</td>
+          <td>{{ f.inyector }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- ==================== supuestos ==================== -->
+<div class="panelbox mt2">
+  <div class="kicker">Supuestos</div>
+  <h2>Parámetros del análisis</h2>
+  <p class="hint mb">Todos los costos son editables. Un proyecto nuevo arranca con
+  estos valores por defecto para poder calcularse de inmediato.</p>
+  <form method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="warn">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="sub" style="font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:4px 0 7px">Ingresos</div>
+    <div class="fields f4">
+      {% for f in form %}{% if f.name in "marcador,precio_manual,diferencial,regalia" %}
+        <div><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+          {% if f.errors %}<div class="hint" style="color:var(--bad)">{{ f.errors|striptags }}</div>{% endif %}</div>
+      {% endif %}{% endfor %}
+    </div>
+
+    <div class="sub" style="font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:16px 0 7px">Costos operativos</div>
+    <div class="fields f4">
+      {% for f in form %}{% if f.name in "costo_iny_agua,costo_manejo_agua,costo_levantamiento,costo_tratamiento_crudo,costo_quimicos,opex_fijo_mes,capex_inicial" %}
+        <div><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+          {% if f.help_text %}<div class="hint">{{ f.help_text }}</div>{% endif %}</div>
+      {% endif %}{% endfor %}
+    </div>
+
+    <div class="sub" style="font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:16px 0 7px">Producción y evaluación</div>
+    <div class="fields f4">
+      {% for f in form %}{% if f.name in "base_produccion,qo_inicial,corte_agua_inicial,declinacion_anual,tasa_descuento,horizonte_meses,limite_economico_bopd" %}
+        <div><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+          {% if f.help_text %}<div class="hint">{{ f.help_text }}</div>{% endif %}</div>
+      {% endif %}{% endfor %}
+    </div>
+
+    <div class="flex mt2"><button class="btn-pri" type="submit">Recalcular con estos supuestos</button></div>
+  </form>
+</div>
+
+<!-- ==================== tabla mensual ==================== -->
+{% if res.ok %}
+<details class="acc mt2">
+  <summary>Flujo de caja mes a mes ({{ params.horizonte_meses }} meses)</summary>
+  <div class="inner">
+    <div class="tablescroll" style="max-height:460px;overflow-y:auto">
+      <table class="list">
+        <tr><th class="num">Mes</th><th class="num">qo (BOPD)</th><th class="num">qw (BWPD)</th>
+          <th class="num">Corte</th><th class="num">Ingreso</th><th class="num">OPEX</th>
+          <th class="num">Margen</th><th class="num">Acumulado</th><th class="num">USD/bbl</th></tr>
+        {% for r in res.filas %}
+          <tr class="{% if r.neto < 0 %}hit{% endif %}">
+            <td class="num">{{ r.mes }}</td>
+            <td class="num">{{ r.qo }}</td>
+            <td class="num">{{ r.qw }}</td>
+            <td class="num">{{ r.corte|floatformat:3 }}</td>
+            <td class="num">{{ r.ingreso|floatformat:0 }}</td>
+            <td class="num">{{ r.opex|floatformat:0 }}</td>
+            <td class="num">{{ r.neto|floatformat:0 }}</td>
+            <td class="num">{{ r.acum|floatformat:0 }}</td>
+            <td class="num">{{ r.opex_bbl|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</details>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ series|json_script:"seriesJson" }}
+<script src="{% static 'core/js/chart.js' %}?v={{ ASSET_V }}"></script>
+<script src="{% static 'core/js/economia.js' %}?v={{ ASSET_V }}"></script>
+{% endblock %}

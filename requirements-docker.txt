@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Solo para el contenedor: servidor WSGI y entrega de estaticos
+gunicorn>=22.0
+whitenoise>=6.6

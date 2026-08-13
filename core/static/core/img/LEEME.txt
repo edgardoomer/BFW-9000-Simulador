@@ -1,0 +1,7 @@
+Coloque aquí su fotografía de perfil con el nombre exacto:
+
+    perfil.jpg
+
+Recomendado: imagen cuadrada, 400 x 400 px o más.
+Aparece en la pestaña Contacto. Mientras el archivo no exista, la página
+muestra un marcador de posición con estas mismas instrucciones.

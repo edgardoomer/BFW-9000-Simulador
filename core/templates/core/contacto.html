@@ -1,0 +1,152 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Contacto{% endblock %}
+{% block encabezado %}Contacto y créditos{% endblock %}
+{% block subtitulo %}
+  <p class="sub">Este simulador es un proyecto propio de ingeniería de yacimientos
+  aplicada. Si quiere adaptarlo a un campo real, discutir el modelo o proponer una
+  colaboración, escríbame por cualquiera de estos canales.</p>
+{% endblock %}
+
+{% block acciones %}
+  {% if proyecto %}<a class="btn" href="{% url 'core:estudio' proyecto.id %}">← Volver al estudio</a>{% endif %}
+{% endblock %}
+
+{% block contenido %}
+
+<div class="perfil">
+  <!-- ==================== columna izquierda ==================== -->
+  <div>
+    <div class="panelbox">
+      <div class="flex" style="gap:20px;align-items:flex-start">
+        <img class="foto" src="{% static perfil.foto %}" alt="{{ perfil.nombre }}"
+             onerror="this.outerHTML='&lt;div class=\'fotoph\'&gt;Coloque su foto en&lt;br&gt;core/static/core/img/perfil.jpg&lt;/div&gt;'">
+        <div style="flex:1;min-width:0">
+          <h2 style="font-size:22px">{{ perfil.nombre }}</h2>
+          <p style="color:var(--soft);font-size:15px;margin-top:3px">{{ perfil.titular }}</p>
+          <p class="hint" style="margin-top:3px">{{ perfil.subtitular }}</p>
+          <div class="chips" style="margin-top:10px">
+            {% for idioma, nivel in perfil.idiomas %}
+              <span class="chip">{{ idioma }} · {{ nivel }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <p style="color:var(--soft);margin-top:15px">{{ perfil.resumen }}</p>
+    </div>
+
+    <div class="panelbox">
+      <div class="kicker">Trayectoria</div>
+      <h2>Proyectos</h2>
+      {% for p in perfil.proyectos %}
+        <div class="proj">
+          <h4>{{ p.titulo }}</h4>
+          <div class="d">{{ p.detalle }}</div>
+          <div class="chips">
+            {% for s in p.stack %}<span class="chip">{{ s }}</span>{% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="panelbox">
+      <div class="kicker">Divulgación</div>
+      <h2>Publicaciones y ponencias</h2>
+      {% for p in perfil.publicaciones %}
+        <div class="proj">
+          <div class="d">{{ p.tipo }}</div>
+          <h4>{{ p.titulo }}</h4>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="panelbox">
+      <div class="kicker">Sobre esta herramienta</div>
+      <h2>Ficha técnica</h2>
+      <div class="tablescroll">
+        <table class="list">
+          <tr><td>Método</td><td class="n">Buckley-Leverett (1942) con construcción de Welge (1952)</td></tr>
+          <tr><td>Frente areal</td><td class="n">Balance volumétrico por sector angular con reparto por transmisibilidad</td></tr>
+          <tr><td>Backend</td><td class="n">Django · SQLite · Python</td></tr>
+          <tr><td>Frontend</td><td class="n">SVG generado a mano, sin librerías de gráficos</td></tr>
+          <tr><td>Precio de crudo</td><td class="n">API REST de oilpriceapi.com con caché y respaldo local</td></tr>
+          <tr><td>Bases de datos</td><td class="n">Proyectos · Pozos · Curvas kr · Canales inyector-productor · Resultados · Economía</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== columna derecha ==================== -->
+  <div>
+    <div class="qrbox">
+      <div class="kicker" style="margin-bottom:9px">Hoja de vida</div>
+      <svg viewBox="0 0 210 210" role="img" aria-label="Código QR de marcador de posición">
+        <rect width="210" height="210" fill="#fff"/>
+        <g fill="var(--ink)">
+          <!-- patrones de posición -->
+          <path d="M15 15h49v49H15z"/><path d="M22 22h35v35H22z" fill="#fff"/><path d="M29 29h21v21H29z"/>
+          <path d="M146 15h49v49h-49z"/><path d="M153 22h35v35h-35z" fill="#fff"/><path d="M160 29h21v21h-21z"/>
+          <path d="M15 146h49v49H15z"/><path d="M22 153h35v35H22z" fill="#fff"/><path d="M29 160h21v21H29z"/>
+          <!-- pautas de sincronización -->
+          <path d="M71 43h7v7h-7zM85 43h7v7h-7zM99 43h7v7h-7zM113 43h7v7h-7zM127 43h7v7h-7z"/>
+          <path d="M43 71h7v7h-7zM43 85h7v7h-7zM43 99h7v7h-7zM43 113h7v7h-7zM43 127h7v7h-7z"/>
+          <!-- cuerpo (decorativo) -->
+          <path d="M71 15h7v7h-7zM85 22h7v7h-7zM99 15h7v7h-7zM113 29h7v7h-7zM127 15h7v7h-7z"/>
+          <path d="M71 29h7v7h-7zM99 36h7v7h-7zM127 29h7v7h-7zM85 36h7v7h-7z"/>
+          <path d="M15 71h7v7h-7zM22 85h7v7h-7zM15 99h7v7h-7zM29 113h7v7h-7zM15 127h7v7h-7z"/>
+          <path d="M29 71h7v7h-7zM36 99h7v7h-7zM29 127h7v7h-7zM36 85h7v7h-7z"/>
+          <path d="M71 71h7v7h-7zM85 71h7v7h-7zM113 71h7v7h-7zM141 71h7v7h-7zM169 71h7v7h-7zM188 71h7v7h-7z"/>
+          <path d="M71 85h7v7h-7zM99 85h7v7h-7zM127 85h7v7h-7zM155 85h7v7h-7zM183 85h7v7h-7z"/>
+          <path d="M85 99h7v7h-7zM113 99h7v7h-7zM141 99h7v7h-7zM169 99h7v7h-7zM71 99h7v7h-7zM188 99h7v7h-7z"/>
+          <path d="M71 113h7v7h-7zM99 113h7v7h-7zM127 113h7v7h-7zM155 113h7v7h-7zM183 113h7v7h-7z"/>
+          <path d="M85 127h7v7h-7zM113 127h7v7h-7zM141 127h7v7h-7zM169 127h7v7h-7zM71 127h7v7h-7z"/>
+          <path d="M71 141h7v7h-7zM99 141h7v7h-7zM127 141h7v7h-7zM155 141h7v7h-7zM188 141h7v7h-7z"/>
+          <path d="M85 155h7v7h-7zM113 155h7v7h-7zM141 155h7v7h-7zM169 155h7v7h-7zM71 169h7v7h-7z"/>
+          <path d="M99 169h7v7h-7zM127 169h7v7h-7zM155 169h7v7h-7zM183 169h7v7h-7zM85 183h7v7h-7z"/>
+          <path d="M113 183h7v7h-7zM141 183h7v7h-7zM169 183h7v7h-7zM99 188h7v7h-7z"/>
+          <path d="M146 99h7v7h-7zM160 113h7v7h-7zM174 127h7v7h-7zM146 155h7v7h-7zM188 169h7v7h-7z"/>
+        </g>
+      </svg>
+      <p class="hint" style="margin-top:10px">
+        Marcador de posición. Reemplácelo por el QR real de su CV editando
+        <code>core/templates/core/contacto.html</code>.
+      </p>
+      <a class="btn mini mt" href="{{ perfil.cv_url }}" target="_blank" rel="noopener">Abrir perfil →</a>
+    </div>
+
+    <div class="mt2">
+      <div class="kicker">Redes</div>
+      <div class="redes">
+        {% for r in perfil.redes %}
+          <a class="red" href="{{ r.url }}" target="_blank" rel="noopener">
+            <span class="ic">{{ r.icono }}</span>
+            <span>{{ r.nombre }}</span>
+            <small>{{ r.usuario }}</small>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panelbox mt2">
+      <div class="kicker">Especialidades</div>
+      <div class="chips" style="margin-top:7px">
+        <span class="chip">Recuperación mejorada</span>
+        <span class="chip">Ingeniería de yacimientos</span>
+        <span class="chip">Python</span>
+        <span class="chip">LangChain</span>
+        <span class="chip">TensorFlow</span>
+        <span class="chip">Eclipse 300</span>
+        <span class="chip">MATLAB</span>
+        <span class="chip">PostgreSQL</span>
+        <span class="chip">SQLite</span>
+        <span class="chip">pandas</span>
+        <span class="chip">numpy</span>
+        <span class="chip">dlisio</span>
+        <span class="chip">Análisis de HPS</span>
+        <span class="chip">Trazadores y polímeros</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

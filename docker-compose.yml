@@ -1,0 +1,31 @@
+services:
+  bfw9000:
+    build: .
+    image: bfw9000:latest
+    container_name: bfw9000
+    ports:
+      - "8017:8017"
+    volumes:
+      # La base queda en ./datos, junto al proyecto: si copia la carpeta,
+      # se lleva sus proyectos con ella.
+      - ./datos:/datos
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      DJANGO_CSRF_ORIGINS: "http://localhost:8017,http://127.0.0.1:8017"
+      DJANGO_DB_PATH: "/datos/db.sqlite3"
+      # Compose lee el archivo .env de esta carpeta y sustituye estas
+      # variables. Si el archivo no esta, se usan los valores por defecto y
+      # el analisis economico cae al precio de respaldo.
+      OILPRICE_API_KEY: "${OILPRICE_API_KEY:-}"
+      OILPRICE_DEFAULT_CODE: "${OILPRICE_DEFAULT_CODE:-BRENT_CRUDE_USD}"
+      OILPRICE_FALLBACK: "${OILPRICE_FALLBACK:-82.00}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-cambie-esta-llave-en-produccion}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8017/proyectos/',timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 5
+      start_period: 25s

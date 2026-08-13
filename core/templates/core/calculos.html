@@ -1,0 +1,279 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Cálculos · {{ pozo.nombre_pozo|default:"pozo" }}{% endblock %}
+{% block encabezado %}Cálculos por pozo{% endblock %}
+{% block subtitulo %}
+  <p class="sub">Toda la cadena del método para un pozo: curvas medidas, ajuste,
+  flujo fraccional, frente, avance y comportamiento posterior a la irrupción.</p>
+{% endblock %}
+
+{% block acciones %}
+  <a class="btn" href="{% url 'core:estudio' proyecto.id %}">← Estudio</a>
+  <a class="btn" href="{% url 'core:metodo' %}?p={{ proyecto.id }}">Ver método</a>
+{% endblock %}
+
+{% block contenido %}
+
+{% if not pozos %}
+  <div class="vacio">Este proyecto todavía no tiene pozos.
+    <a href="{% url 'core:estudio' proyecto.id %}">Agréguelos en la pestaña Estudio →</a></div>
+{% else %}
+
+<!-- selector de pozo -->
+<div class="panelbox" style="padding:12px 15px">
+  <div class="flex">
+    <span class="kicker" style="margin:0 6px 0 0">Pozo</span>
+    {% for w in pozos %}
+      <a class="btn mini {% if w.id == pozo.id %}btn-pri{% endif %}"
+         href="{% url 'core:calculos_pozo' proyecto.id w.id %}">
+        {% if w.tipo == 'INY' %}▲{% else %}●{% endif %} {{ w.nombre_pozo }}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ==================== ficha ==================== -->
+<div class="panelbox">
+  <div class="between">
+    <div>
+      <div class="kicker">{{ pozo.get_tipo_display }} · {{ pozo.id_pozo }}</div>
+      <h2>{{ pozo.nombre_pozo }}</h2>
+    </div>
+    <div class="chips">
+      <span class="chip">X {{ pozo.x|floatformat:0 }} · Y {{ pozo.y|floatformat:0 }}</span>
+      <span class="chip">{{ pozo.get_tipo_display }}</span>
+      {% if pozo.tipo == 'INY' %}
+        <span class="chip">{{ pozo.get_tipo_bomba_iny_display }}</span>
+      {% else %}
+        <span class="chip">{{ pozo.get_tipo_levantamiento_display }}</span>
+      {% endif %}
+      <span class="chip">{{ pozo.get_tipo_completacion_display }}</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">q</div><div class="v">{{ pozo.q|floatformat:0 }}</div>
+      <div class="u">{% if pozo.tipo == 'INY' %}BWPD inyectados{% else %}BFPD líquido{% endif %}</div></div>
+    <div class="stat"><div class="k">Espesor h</div><div class="v">{{ f.pozo.h|default:proyecto.h_def|floatformat:1 }}</div><div class="u">ft</div></div>
+    <div class="stat"><div class="k">Porosidad φ</div><div class="v">{{ f.pozo.phi|default:proyecto.phi_def|floatformat:3 }}</div><div class="u">fracción</div></div>
+    <div class="stat"><div class="k">kh</div><div class="v">{{ f.pozo.k|default:proyecto.k_def|floatformat:0 }}</div><div class="u">md</div></div>
+    <div class="stat"><div class="k">kv</div><div class="v">{{ pozo.kv|default:"—"|floatformat:0 }}</div>
+      <div class="u">md{% if pozo.kv_kh %} · kv/kh = {{ pozo.kv_kh|floatformat:3 }}{% endif %}</div></div>
+    <div class="stat"><div class="k">Prof. TVD</div><div class="v">{{ pozo.prof_tvd|default:"—"|floatformat:0 }}</div><div class="u">ft</div></div>
+  </div>
+
+  {% if params %}
+  <details class="acc" style="box-shadow:none;margin-top:6px">
+    <summary>Parámetros del sistema de {% if pozo.tipo == 'INY' %}inyección{% else %}levantamiento{% endif %}</summary>
+    <div class="inner">
+      <div class="tablescroll"><table class="list">
+        {% for k, v in params %}
+          <tr><td>{{ k|cut:"_"|title }}</td><td class="num n">{{ v }}</td></tr>
+        {% endfor %}
+      </table></div>
+    </div>
+  </details>
+  {% endif %}
+  {% if pozo.notas %}<p class="hint mt">{{ pozo.notas }}</p>{% endif %}
+</div>
+
+{% if f.es_inyector %}
+<!-- ==================== INYECTOR ==================== -->
+<div class="panelbox">
+  <div class="kicker">Reparto direccional</div>
+  <h2>Canales que salen de este inyector</h2>
+  <p class="hint mb">La fracción de caudal se obtiene integrando la campana angular
+  de cada canal. La suma no llega a 1 porque parte del agua va al fondo matricial,
+  que no apunta a ningún productor.</p>
+  <div class="tablescroll">
+    <table class="list">
+      <tr><th>Productor</th><th class="num">L (ft)</th><th class="num">k dir (md)</th>
+        <th class="num">Azimut (°)</th><th class="num">Peso rel.</th>
+        <th class="num">Fracción q</th><th class="num">q asignado (BWPD)</th>
+        <th class="num">tBT (días)</th><th class="num">años</th></tr>
+      {% for r in f.pares %}
+      <tr class="{% if forloop.first %}sel{% endif %}">
+        <td class="n">{{ r.productor }}</td>
+        <td class="num">{{ r.L|floatformat:0 }}</td>
+        <td class="num">{{ r.k|floatformat:0 }}</td>
+        <td class="num">{{ r.azimut|floatformat:0 }}</td>
+        <td class="num">{{ r.peso|floatformat:3 }}</td>
+        <td class="num">{{ r.fraccion|floatformat:3 }}</td>
+        <td class="num">{{ r.q_asignado|floatformat:0 }}</td>
+        <td class="num">{{ r.tbt|floatformat:0 }}</td>
+        <td class="num">{{ r.anios|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9">Este inyector no está conectado a ningún productor.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="chartbox">
+  <h3>Densidad angular del frente</h3>
+  <p class="hint">Radio unitario r₁(θ) en ft/√día. Es la huella del inyector:
+  donde el radio es mayor, el agua corre más rápido.</p>
+  <div id="polar"></div>
+</div>
+
+{% else %}
+<!-- ==================== PRODUCTOR ==================== -->
+
+{% if not f.sol.ok %}
+  <div class="warn">{{ f.sol.mensaje }}</div>
+{% else %}
+
+<div class="panelbox">
+  <div class="kicker">Resumen del método</div>
+  <h2>Resultados de Buckley-Leverett</h2>
+  <div class="stats">
+    <div class="stat"><div class="k">a del ajuste</div><div class="v">{{ f.sol.a|floatformat:1 }}</div></div>
+    <div class="stat"><div class="k">b del ajuste</div><div class="v">{{ f.sol.b|floatformat:3 }}</div><div class="u">1/fracc. Sw</div></div>
+    <div class="stat"><div class="k">R² del ajuste</div><div class="v">{{ f.sol.r2|floatformat:4 }}</div></div>
+    <div class="stat hi"><div class="k">Sw del frente</div><div class="v">{{ f.sol.swf|floatformat:4 }}</div></div>
+    <div class="stat"><div class="k">fw en el frente</div><div class="v">{{ f.sol.fwf|floatformat:4 }}</div></div>
+    <div class="stat"><div class="k">(dfw/dSw) frente</div><div class="v">{{ f.sol.dfwf|floatformat:3 }}</div></div>
+    <div class="stat"><div class="k">S̄w tras el frente</div><div class="v">{{ f.sol.sw_prom_bt|floatformat:4 }}</div></div>
+    <div class="stat"><div class="k">E_D a la irrupción</div><div class="v">{{ f.sol.ed_bt|floatformat:4 }}</div><div class="u">fracción</div></div>
+    <div class="stat {% if f.sol.razon_movilidad > 1 %}warn{% else %}good{% endif %}">
+      <div class="k">Razón de movilidad M</div><div class="v">{{ f.sol.razon_movilidad|floatformat:2 }}</div>
+      <div class="u">{% if f.sol.razon_movilidad > 1 %}desfavorable{% else %}favorable{% endif %}</div></div>
+    <div class="stat hi"><div class="k">Irrupción</div><div class="v">{{ f.tbt|floatformat:0 }}</div><div class="u">días</div></div>
+    <div class="stat"><div class="k">Distancia crítica</div><div class="v">{{ f.L|floatformat:0 }}</div><div class="u">ft</div></div>
+    <div class="stat"><div class="k">fw en Swi</div><div class="v">{{ f.sol.fw0|floatformat:4 }}</div><div class="u">artefacto del ajuste</div></div>
+  </div>
+  {% if f.sol.r2 < 0.97 %}
+    <div class="warn">R² = {{ f.sol.r2|floatformat:4 }}. El modelo exponencial no
+    representa bien estos puntos; la derivada analítica arrastra ese error.</div>
+  {% endif %}
+</div>
+
+<div class="panelbox">
+  <div class="kicker">Alimentación</div>
+  <h2>Inyectores que aportan agua a este pozo</h2>
+  <div class="tablescroll">
+    <table class="list">
+      <tr><th>#</th><th>Inyector</th><th class="num">L (ft)</th><th class="num">k dir (md)</th>
+        <th class="num">Azimut (°)</th><th class="num">Ancho (°)</th>
+        <th class="num">q asignado (BWPD)</th><th class="num">tBT (días)</th><th class="num">años</th></tr>
+      {% for l in f.llegadas %}
+      <tr class="{% if forloop.first %}sel{% endif %}">
+        <td>{{ forloop.counter }}</td>
+        <td class="n">{{ l.inyector }}</td>
+        <td class="num">{{ l.L|floatformat:0 }}</td>
+        <td class="num">{{ l.k|floatformat:0 }}</td>
+        <td class="num">{{ l.azimut|floatformat:0 }}</td>
+        <td class="num">{{ l.ancho|floatformat:0 }}</td>
+        <td class="num">{{ l.q_asignado|floatformat:0 }}</td>
+        <td class="num">{{ l.tbt|floatformat:0 }}</td>
+        <td class="num">{{ l.anios|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9">Sin inyectores conectados.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <p class="hint mt">La irrupción del pozo es la <b>primera llegada</b> de todas:
+  la fila resaltada.</p>
+</div>
+
+<!-- ==================== graficos ==================== -->
+<div class="charts">
+  <div class="chartbox">
+    <h3>1 · Permeabilidades relativas</h3>
+    <p class="hint">{{ f.curva_nombre }}</p>
+    <div id="g_kr"></div>
+    <div class="leyenda">
+      <span><i style="background:var(--crude)"></i>k<sub>ro</sub> · al petróleo</span>
+      <span><i style="background:var(--brine)"></i>k<sub>rw</sub> · al agua</span>
+    </div>
+  </div>
+  <div class="chartbox">
+    <h3>2 · Ajuste ln(k<sub>ro</sub>/k<sub>rw</sub>) vs S<sub>w</sub></h3>
+    <p class="hint">La pendiente da −b y la ordenada al origen da ln a.</p>
+    <div id="g_fit"></div>
+  </div>
+  <div class="chartbox">
+    <h3>3 · Flujo fraccional y tangente de Welge</h3>
+    <p class="hint">La tangente parte de (Swi, fw₀) y corta fw = 1 en S̄w.</p>
+    <div id="g_fw"></div>
+  </div>
+  <div class="chartbox">
+    <h3>4 · Derivada df<sub>w</sub>/dS<sub>w</sub></h3>
+    <p class="hint">Analítica, sin diferencias finitas.</p>
+    <div id="g_dfw"></div>
+  </div>
+  <div class="chartbox">
+    <h3>5 · Perfil de saturación a la irrupción</h3>
+    <p class="hint">El salto vertical en x<sub>f</sub> es el choque. Detrás queda
+    la zona de transición hasta 1 − S<sub>or</sub>.</p>
+    <div id="g_perfil"></div>
+  </div>
+  <div class="chartbox">
+    <h3>6 · Recobro y corte de agua tras la irrupción</h3>
+    <p class="hint">Eje inferior en volúmenes porosos inyectados.</p>
+    <div id="g_post"></div>
+  </div>
+  <div class="chartbox">
+    <h3>7 · Relación agua-petróleo</h3>
+    <p class="hint">WOR de superficie, corregida por B<sub>o</sub>/B<sub>w</sub>.</p>
+    <div id="g_wor"></div>
+  </div>
+  <div class="chartbox">
+    <h3>8 · Presión capilar (función J de Leverett)</h3>
+    <p class="hint" id="pc_hint">Requiere σ, θ, k y φ del pozo.</p>
+    <div id="g_pc"></div>
+  </div>
+</div>
+
+<!-- ==================== tabla kr editable ==================== -->
+<div class="panelbox mt2">
+  <div class="between mb">
+    <div>
+      <div class="kicker">Datos de origen</div>
+      <h2>Tabla de permeabilidades relativas</h2>
+    </div>
+    <div class="flex">
+      <span class="guardando" id="guardando">guardando…</span>
+      {% if curva_id %}
+        <button class="mini" id="addFila">+ Fila</button>
+        <button class="mini btn-pri" id="guardarKr">Guardar curva</button>
+      {% endif %}
+    </div>
+  </div>
+  {% if not curva_id %}
+    <div class="info">Este pozo usa una curva heredada. Asígnele una curva propia
+      en la ficha del pozo para poder editar los puntos aquí.</div>
+  {% endif %}
+  <div class="tablescroll">
+    <table class="list" id="tablaKr">
+      <thead><tr><th>Sw</th><th class="num">krw</th><th class="num">kro</th>
+        <th class="num">kro/krw</th><th class="num">ln(kro/krw)</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="hint mt">Las filas con k<sub>rw</sub> = 0 o k<sub>ro</sub> = 0 quedan
+  fuera del ajuste: el logaritmo no existe. Se conservan porque definen los
+  puntos extremos de la curva.</p>
+</div>
+
+{% endif %}{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ series|json_script:"seriesJson" }}
+{{ pc|json_script:"pcJson" }}
+{{ campo|json_script:"campoJson" }}
+{{ curva_puntos|json_script:"krJson" }}
+<script src="{% static 'core/js/chart.js' %}?v={{ ASSET_V }}"></script>
+<script src="{% static 'core/js/calculos.js' %}?v={{ ASSET_V }}"></script>
+<script>
+  BLCalculos.iniciar({
+    curvaId: {{ curva_id|default:"null" }},
+    urlCurva: "/api/curva/"
+  });
+</script>
+{% endblock %}

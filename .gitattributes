@@ -1,0 +1,28 @@
+# Normalizacion de fin de linea.
+#
+# Critico: los archivos que se ejecutan DENTRO del contenedor Linux deben
+# conservar LF. Si Git los entrega con CRLF al clonar en Windows, el shebang
+# queda como "#!/bin/sh\r" y el contenedor falla con un desconcertante
+# "no such file or directory".
+*.sh              text eol=lf
+Dockerfile        text eol=lf
+docker-compose.yml text eol=lf
+*.yml             text eol=lf
+
+# Los lanzadores son de Windows y quieren CRLF.
+*.bat             text eol=crlf
+*.ps1             text eol=crlf
+
+# El resto se normaliza a LF en el repositorio.
+*.py              text
+*.html            text
+*.css             text
+*.js              text
+*.md              text
+*.txt             text
+
+# Binarios: que Git no los toque.
+*.png             binary
+*.jpg             binary
+*.ico             binary
+*.sqlite3         binary

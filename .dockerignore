@@ -1,0 +1,19 @@
+# La llave NO se hornea en la imagen: se inyecta al arrancar el contenedor.
+.env
+
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+db.sqlite3-journal
+datos/
+staticfiles/
+.git/
+.idea/
+.vscode/
+.claude/
+varios/
+*.log
+*.bat
+*.vbs
+*.ico

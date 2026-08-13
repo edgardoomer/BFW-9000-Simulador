@@ -1,0 +1,61 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{% if obj %}Editar {{ obj.id_proyecto }}{% else %}Nuevo proyecto{% endif %}{% endblock %}
+{% block encabezado %}{% if obj %}Editar proyecto{% else %}Nuevo proyecto{% endif %}{% endblock %}
+{% block subtitulo %}
+  <p class="sub">Los valores por defecto del yacimiento se usan cuando un pozo no
+  trae su propio dato, de modo que el proyecto se puede calcular apenas se crea.</p>
+{% endblock %}
+
+{% block acciones %}
+  <a class="btn" href="{% url 'core:proyectos' %}">← Volver</a>
+{% endblock %}
+
+{% block contenido %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="warn">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="panelbox">
+    <div class="kicker">Identificación</div>
+    <h2>Ficha del proyecto</h2>
+    <div class="fields f3 mt">
+      {% for f in form %}{% if f.name in "id_proyecto,nombre,fecha,operadora,bloque,campo,yacimiento,pozos,area_acres,unidad_coord" %}
+        <div{% if f.name == "nombre" %} style="grid-column:span 2"{% endif %}>
+          <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+          {{ f }}
+          {% if f.errors %}<div class="hint" style="color:var(--bad)">{{ f.errors|striptags }}</div>{% endif %}
+          {% if f.help_text %}<div class="hint">{{ f.help_text }}</div>{% endif %}
+        </div>
+      {% endif %}{% endfor %}
+    </div>
+    <div class="mt">
+      <label for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
+      {{ form.descripcion }}
+    </div>
+  </div>
+
+  <div class="panelbox">
+    <div class="kicker">Valores por defecto</div>
+    <h2>Propiedades del yacimiento</h2>
+    <p class="hint mb">Un pozo que deje un campo vacío hereda estos valores.</p>
+    <div class="fields f4">
+      {% for f in form %}{% if f.name in "h_def,phi_def,swi_def,sor_def,k_def,muw_def,muo_def,bo_def,bw_def,presion_def,temperatura_def,api_def,rw_def" %}
+        <div>
+          <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+          {{ f }}
+          {% if f.errors %}<div class="hint" style="color:var(--bad)">{{ f.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}{% endfor %}
+    </div>
+  </div>
+
+  <div class="flex">
+    <button class="btn-pri" type="submit">{% if obj %}Guardar cambios{% else %}Crear proyecto{% endif %}</button>
+    <a class="btn" href="{% url 'core:proyectos' %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

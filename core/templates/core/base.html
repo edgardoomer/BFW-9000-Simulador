@@ -1,0 +1,97 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}BFW-9000{% endblock %} · Simulador de Waterflooding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'core/css/app.css' %}?v={{ ASSET_V }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%2316211F'/><circle cx='11' cy='19' r='7' fill='%2316687A'/><circle cx='22' cy='13' r='4' fill='%239A4B1B'/></svg>">
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= barra maestra ================= -->
+  <nav class="rail">
+    <a class="rail-brand" href="{% url 'core:proyectos' %}">
+      {# Coloque el logo en core/static/core/img/logo.png y reemplaza a la marca CSS #}
+      <img class="rail-logo" src="{% static 'core/img/logo.png' %}" alt=""
+           onerror="this.outerHTML='&lt;span class=\'rail-mark\'&gt;&lt;/span&gt;'">
+      <span>
+        <b>BFW-9000</b>
+        <i>Simulador de Waterflooding · Método Buckley &amp; Leverett</i>
+      </span>
+    </a>
+
+    <div class="rail-group">
+      <span class="rail-label">Datos</span>
+      <a href="{% url 'core:proyectos' %}" class="rail-item {% if seccion == 'proyectos' %}on{% endif %}">
+        <span class="ri">◧</span> Proyectos
+      </a>
+      {% if proyecto %}
+      <a href="{% url 'core:estudio' proyecto.id %}" class="rail-item {% if seccion == 'estudio' %}on{% endif %}">
+        <span class="ri">◉</span> Estudio
+      </a>
+      <a href="{% url 'core:calculos' proyecto.id %}" class="rail-item {% if seccion == 'calculos' %}on{% endif %}">
+        <span class="ri">∑</span> Cálculos por pozo
+      </a>
+      <a href="{% url 'core:economia' proyecto.id %}" class="rail-item {% if seccion == 'economia' %}on{% endif %}">
+        <span class="ri">$</span> Economía
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="rail-group">
+      <span class="rail-label">Referencia</span>
+      <a href="{% url 'core:metodo' %}" class="rail-item {% if seccion == 'metodo' %}on{% endif %}">
+        <span class="ri">ƒ</span> Método
+      </a>
+      <a href="{% url 'core:contacto' %}" class="rail-item {% if seccion == 'contacto' %}on{% endif %}">
+        <span class="ri">✉</span> Contacto
+      </a>
+    </div>
+
+    {% if proyecto %}
+    <div class="rail-proj">
+      <span class="rail-label">Proyecto activo</span>
+      <b>{{ proyecto.id_proyecto }}</b>
+      <i>{{ proyecto.campo }}{% if proyecto.bloque %} · {{ proyecto.bloque }}{% endif %}</i>
+    </div>
+    {% endif %}
+
+    <a class="rail-foot" href="{% url 'core:contacto' %}">
+      Edgar F. Izurieta M.<br><span>Ingeniero en Petróleos</span>
+    </a>
+  </nav>
+
+  <!-- ================= contenido ================= -->
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1>{% block encabezado %}{% endblock %}</h1>
+        {% block subtitulo %}{% endblock %}
+      </div>
+      <div class="topbar-acc">{% block acciones %}{% endblock %}</div>
+    </header>
+
+    {% if messages %}
+      {% for m in messages %}
+        <div class="{% if m.tags == 'error' %}warn{% else %}info{% endif %}">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% block contenido %}{% endblock %}
+
+    <footer class="pie">
+      <span>Simulador de desplazamiento inmiscible · Sweep &amp; Tear</span>
+      <a href="{% url 'core:contacto' %}">Contacto y créditos →</a>
+    </footer>
+  </main>
+</div>
+
+<script>window.CSRF = "{{ csrf_token }}";</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
