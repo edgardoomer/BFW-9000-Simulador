@@ -287,6 +287,16 @@ Conviene tenerlas presentes antes de llevar un resultado a una reunión:
 - El perfil económico responde a valores predeterminados que es posible cambiar. Los valores son tipicos o promedio,
   teniendo en cuenta al ultimo valor del precio de petroleo registrado. La simulación del mismo responde al metodo propuesto
 
+## Desarrollo
+
+Autor: **Ing. Edgar Fernando Izurieta Merchán**. El planteamiento del modelo de
+Buckley-Leverett, los supuestos del frente areal, los criterios económicos y los
+datos de entrada son propios.
+
+La implementación del código se hizo con asistencia de **Claude (Anthropic)**,
+usado como herramienta de apoyo en la escritura y revisión. La responsabilidad
+sobre el contenido técnico y los resultados es del autor.
+
 ---
 
 Edgar Fernando Izurieta Merchán · Ingeniero en Petróleos - Especialista de IA y Datos para la industria petrolera
